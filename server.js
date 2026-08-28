@@ -25,6 +25,8 @@ db.serialize(() => {
         pages INTEGER DEFAULT 1,
         total_price DECIMAL(10,2) NOT NULL,
         status TEXT DEFAULT 'pending',
+        customer_name TEXT,
+        customer_mobile TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
@@ -67,7 +69,7 @@ app.post('/api/settings/prices', (req, res) => {
 
 // API: Create Order
 app.post('/api/orders', upload.single('document'), (req, res) => {
-    const { printType, copies, sides, amount, fileName, pages } = req.body;
+    const { printType, copies, sides, amount, fileName, pages, customerName, customerMobile } = req.body;
     const filename = fileName || (req.file ? req.file.originalname : 'dummy.pdf');
     const file_url = req.file 
         ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` 
@@ -75,8 +77,8 @@ app.post('/api/orders', upload.single('document'), (req, res) => {
     const total_price = amount || 10.0;
     const page_count = pages ? parseInt(pages) : 1;
 
-    const stmt = db.prepare(`INSERT INTO orders (filename, file_url, print_type, copies, sides, pages, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-    stmt.run([filename, file_url, printType || 'bw', copies || 1, sides || 'single', page_count, total_price], function (err) {
+    const stmt = db.prepare(`INSERT INTO orders (filename, file_url, print_type, copies, sides, pages, total_price, customer_name, customer_mobile) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    stmt.run([filename, file_url, printType || 'bw', copies || 1, sides || 'single', page_count, total_price, customerName || '', customerMobile || ''], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, order_id: this.lastID, message: "Order placed successfully!", id: this.lastID });
     });
