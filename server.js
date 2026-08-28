@@ -27,6 +27,14 @@ db.serialize(() => {
         status TEXT DEFAULT 'pending',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )`);
+    
+    // Insert default prices if not exists
+    db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('prices', '{"bw":2, "color":10, "passport":30}')`);
 });
 
 // File upload setup
@@ -38,6 +46,24 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 app.use('/uploads', express.static(uploadsDir));
+
+// API: Get Prices
+app.get('/api/settings/prices', (req, res) => {
+    db.get(`SELECT value FROM settings WHERE key = 'prices'`, [], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (row) return res.json(JSON.parse(row.value));
+        res.json({ bw: 2, color: 10, passport: 30 });
+    });
+});
+
+// API: Update Prices
+app.post('/api/settings/prices', (req, res) => {
+    const prices = req.body;
+    db.run(`UPDATE settings SET value = ? WHERE key = 'prices'`, [JSON.stringify(prices)], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
 
 // API: Create Order
 app.post('/api/orders', upload.single('document'), (req, res) => {
