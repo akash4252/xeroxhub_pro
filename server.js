@@ -63,6 +63,24 @@ app.get('/api/orders', (req, res) => {
     });
 });
 
+// API: Get Single Order
+app.get('/api/orders/:id', (req, res) => {
+    db.get(`SELECT * FROM orders WHERE id = ?`, [req.params.id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: 'Not found' });
+        res.json(row);
+    });
+});
+
+// API: Update Order Status (For C# Print Agent)
+app.post('/api/orders/:id/status', (req, res) => {
+    const { status } = req.body;
+    db.run(`UPDATE orders SET status = ? WHERE id = ?`, [status, req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
 // API: Print Queue for C# Print Agent
 app.get(['/api/queue', '/api/queue.php'], (req, res) => {
     db.all(`SELECT * FROM orders WHERE status = 'pending'`, [], (err, rows) => {
