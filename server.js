@@ -44,7 +44,7 @@ app.post('/api/orders', upload.single('document'), (req, res) => {
     const { printType, copies, sides, amount, fileName } = req.body;
     const filename = fileName || (req.file ? req.file.originalname : 'dummy.pdf');
     const file_url = req.file 
-        ? `http://localhost:3000/uploads/${req.file.filename}` 
+        ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` 
         : 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
     const total_price = amount || 10.0;
 
