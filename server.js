@@ -30,6 +30,10 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    // Auto-migrate old schemas (ignore errors if columns already exist)
+    db.run(`ALTER TABLE orders ADD COLUMN customer_name TEXT`, (err) => {});
+    db.run(`ALTER TABLE orders ADD COLUMN customer_mobile TEXT`, (err) => {});
+
     db.run(`CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT
