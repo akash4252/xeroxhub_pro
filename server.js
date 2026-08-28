@@ -41,15 +41,16 @@ app.use('/uploads', express.static(uploadsDir));
 
 // API: Create Order
 app.post('/api/orders', upload.single('document'), (req, res) => {
-    const { printType, copies, sides, amount, fileName } = req.body;
+    const { printType, copies, sides, amount, fileName, pages } = req.body;
     const filename = fileName || (req.file ? req.file.originalname : 'dummy.pdf');
     const file_url = req.file 
         ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` 
         : 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
     const total_price = amount || 10.0;
+    const page_count = pages ? parseInt(pages) : 1;
 
-    const stmt = db.prepare(`INSERT INTO orders (filename, file_url, print_type, copies, sides, total_price) VALUES (?, ?, ?, ?, ?, ?)`);
-    stmt.run([filename, file_url, printType || 'bw', copies || 1, sides || 'single', total_price], function (err) {
+    const stmt = db.prepare(`INSERT INTO orders (filename, file_url, print_type, copies, sides, pages, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+    stmt.run([filename, file_url, printType || 'bw', copies || 1, sides || 'single', page_count, total_price], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, order_id: this.lastID, message: "Order placed successfully!", id: this.lastID });
     });
@@ -99,7 +100,8 @@ app.get(['/api/queue', '/api/queue.php'], (req, res) => {
             FileUrl: r.file_url,
             PrintType: r.print_type,
             Copies: r.copies,
-            Sides: r.sides
+            Sides: r.sides,
+            Pages: r.pages
         }));
         res.json(jobs);
     });
