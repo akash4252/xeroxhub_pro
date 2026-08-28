@@ -110,13 +110,12 @@ app.post('/api/orders/:id/status', (req, res) => {
 
 // API: Print Queue for C# Print Agent
 app.get(['/api/queue', '/api/queue.php'], (req, res) => {
-    db.all(`SELECT * FROM orders WHERE status = 'pending'`, [], (err, rows) => {
+    db.all(`SELECT * FROM orders WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         
-        // Mark them as printing immediately to avoid duplicate prints
+        // Mark the single job as printing immediately
         if (rows.length > 0) {
-            const ids = rows.map(r => r.id).join(',');
-            db.run(`UPDATE orders SET status = 'printing' WHERE id IN (${ids})`);
+            db.run(`UPDATE orders SET status = 'printing' WHERE id = ?`, [rows[0].id]);
         }
         
         // Map to what Print Agent expects
